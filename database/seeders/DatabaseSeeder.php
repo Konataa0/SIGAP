@@ -2,24 +2,35 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\User;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // ── Buat akun Admin default ───────────────────────────────────────────
+        User::create([
+            'name'     => 'Admin SIGAP',
+            'email'    => 'admin@sigap.test',
+            'password' => bcrypt('password'),
+            'role'     => 'admin',
+        ]);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // ── Buat akun Mahasiswa contoh ────────────────────────────────────────
+        User::create([
+            'name'     => 'Mahasiswa Demo',
+            'email'    => 'mahasiswa@sigap.test',
+            'password' => bcrypt('password'),
+            'role'     => 'mahasiswa',
+        ]);
+
+        // ── Jalankan seeder data ──────────────────────────────────────────────
+        // Urutan PENTING: kriteria dulu sebelum nilai_kegiatan
+        $this->call([
+            KriteriaSeeder::class,       // ← dulu
+            KegiatanSeeder::class,       // ← dulu
+            NilaiKegiatanSeeder::class,  // ← terakhir (butuh kegiatan & kriteria)
         ]);
     }
 }
