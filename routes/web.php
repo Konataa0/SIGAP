@@ -1,56 +1,46 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\KegiatanController;
-use App\Http\Controllers\KriteriaController;
-use App\Http\Controllers\NilaiKegiatanController;
 
-// ─── Halaman utama ────────────────────────────────────────────────────────────
+// 1. Mengarahkan halaman utama langsung ke Dashboard UI buatanmu
 Route::get('/', function () {
-    return view('welcome');
+    return view('dashboard');
 });
 
-// ─── Route yang butuh login ───────────────────────────────────────────────────
-Route::middleware(['auth'])->group(function () {
+// 2. Jalur Dashboard Utama
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->name('dashboard');
 
-    // Dashboard (view dibuat Anggota 2)
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+// 3. Jalur Form Input Minat & Kriteria (Disertai Data Dummy agar tidak error)
+Route::get('/rekomendasi/form', function () {
+    $kriteria = [
+        (object)['id' => 1, 'nama_kriteria' => 'Prestasi Akademik / IPK', 'kode' => 'C1', 'jenis' => 'benefit'],
+        (object)['id' => 2, 'nama_kriteria' => 'Minat Bakat Coding & Core IT', 'kode' => 'C2', 'jenis' => 'benefit'],
+        (object)['id' => 3, 'nama_kriteria' => 'Ketersediaan Waktu Sisa', 'kode' => 'C3', 'jenis' => 'benefit'],
+        (object)['id' => 4, 'nama_kriteria' => 'Biaya Pendaftaran Kegiatan', 'kode' => 'C4', 'jenis' => 'cost'],
+    ];
+    return view('rekomendasi.form', compact('kriteria'));
+})->name('rekomendasi.form');
 
-    // ── Rekomendasi SAW (Mahasiswa) ───────────────────────────────────────────
-    // Form preferensi (view dibuat Anggota 2)
-    Route::get('/rekomendasi', function () {
-        $kriteria = \App\Models\Kriteria::orderBy('kode')->get();
-        return view('rekomendasi.form', compact('kriteria'));
-    })->name('rekomendasi.form');
+// 4. Jalur Halaman Hasil Analisis Perankingan SAW
+Route::get('/rekomendasi/hasil', function () {
+    return view('rekomendasi.hasil');
+})->name('rekomendasi.hasil');
 
-    // Proses hitung SAW
-    Route::post('/rekomendasi', [KegiatanController::class, 'prosesRekomendasi'])
-         ->name('rekomendasi.proses');
+// Jalur bayangan untuk tombol submit form proses
+Route::post('/rekomendasi/proses', function () {
+    return redirect()->route('rekomendasi.hasil');
+})->name('rekomendasi.proses');
 
-    // Halaman hasil rekomendasi (view dibuat Anggota 2)
-    Route::get('/rekomendasi/hasil', [KegiatanController::class, 'hasilRekomendasi'])
-         ->name('rekomendasi.hasil');
+// Tambahkan baris ini di bagian paling bawah file routes/web.php kamu
 
-    // ── Route khusus Admin ────────────────────────────────────────────────────
-    Route::middleware(['role:admin'])->group(function () {
+// 5. Jalur Kelola Kegiatan (Admin)
+Route::get('/admin/kegiatan', function () {
+    return view('kegiatan.index');
+})->name('kegiatan.index');
 
-        // CRUD Kegiatan
-        Route::resource('kegiatan', KegiatanController::class);
-
-        // CRUD Kriteria + Bobot
-        Route::resource('kriteria', KriteriaController::class);
-
-        // Isi nilai kegiatan (matriks SAW)
-        Route::get('/nilai-kegiatan/{kegiatan}',  [NilaiKegiatanController::class, 'edit'])
-             ->name('nilai-kegiatan.edit');
-        Route::post('/nilai-kegiatan/{kegiatan}', [NilaiKegiatanController::class, 'update'])
-             ->name('nilai-kegiatan.update');
-    });
-});
-
-// ─── Auth routes (login, register, logout) ────────────────────────────────────
-// Dibuat oleh Anggota 3 pakai Laravel Breeze.
-// Uncomment baris ini setelah Anggota 3 install Breeze:
-// require __DIR__.'/auth.php';
+// 6. Jalur Manajemen Kriteria (Admin)
+Route::get('/admin/kriteria', function () {
+    return view('kriteria.index');
+})->name('kcriteria.index'); // Sesuaikan dengan requestIs di master layout ('kcriteria.*')
