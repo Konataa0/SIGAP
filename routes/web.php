@@ -1,10 +1,24 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
 // 1. Mengarahkan halaman utama langsung ke Dashboard UI buatanmu
 Route::get('/', function () {
-    return view('dashboard');
+    return view('home');
+})->name('home');
+
+// Auth untuk tamu (guest): login & register mahasiswa
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])->name('login.store');
+
+    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+    Route::post('/register', [AuthController::class, 'register'])->name('register.store');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
 
 // 2. Jalur Dashboard Utama
@@ -35,12 +49,15 @@ Route::post('/rekomendasi/proses', function () {
 
 // Tambahkan baris ini di bagian paling bawah file routes/web.php kamu
 
-// 5. Jalur Kelola Kegiatan (Admin)
-Route::get('/admin/kegiatan', function () {
-    return view('kegiatan.index');
-})->name('kegiatan.index');
+// 5-6. Rute Admin dibungkus dengan middleware role:admin
+Route::middleware(['role:admin'])->group(function () {
+    // Kelola Kegiatan (Admin)
+    Route::get('/admin/kegiatan', function () {
+        return view('kegiatan.index');
+    })->name('kegiatan.index');
 
-// 6. Jalur Manajemen Kriteria (Admin)
-Route::get('/admin/kriteria', function () {
-    return view('kriteria.index');
-})->name('kcriteria.index'); // Sesuaikan dengan requestIs di master layout ('kcriteria.*')
+    // Manajemen Kriteria (Admin)
+    Route::get('/admin/kriteria', function () {
+        return view('kriteria.index');
+    })->name('kriteria.index');
+});

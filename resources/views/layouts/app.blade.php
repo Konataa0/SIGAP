@@ -59,12 +59,26 @@
         <div class="p-4 border-t border-slate-800 bg-slate-900/50">
             <div class="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-800/30">
                 <div class="truncate">
-                    <p class="text-xs font-bold text-white truncate">Hady Yusuf Pratama</p>
-                    <p class="text-[10px] text-slate-500 truncate">hadynata@student.ac.id</p>
+                    @auth
+                        <p class="text-xs font-bold text-white truncate">{{ auth()->user()->name }}</p>
+                        <p class="text-[10px] text-slate-500 truncate">{{ auth()->user()->email }}</p>
+                    @else
+                        <p class="text-xs font-bold text-white truncate">Guest</p>
+                        <p class="text-[10px] text-slate-500 truncate">Silakan login</p>
+                    @endauth
                 </div>
-                <a href="#" class="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all">
-                    <i data-lucide="log-out" class="w-4 h-4"></i>
-                </a>
+                @auth
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all" title="Logout">
+                            <i data-lucide="log-out" class="w-4 h-4"></i>
+                        </button>
+                    </form>
+                @else
+                    <a href="{{ route('login') }}" class="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-all" title="Login">
+                        <i data-lucide="log-in" class="w-4 h-4"></i>
+                    </a>
+                @endauth
             </div>
         </div>
     </aside>
