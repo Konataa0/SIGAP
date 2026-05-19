@@ -1,11 +1,93 @@
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Setup Project SIGAP
+
+Panduan ini untuk menjalankan project di lokal (Windows/macOS/Linux).
+
+### 1. Prasyarat
+
+- PHP 8.3+
+- Composer
+- Node.js 18+ dan npm
+- MySQL/MariaDB
+
+### 2. Install dependency
+
+```bash
+composer install
+npm install
+```
+
+### 3. Konfigurasi environment
+
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+
+Untuk Windows PowerShell jika `cp` tidak tersedia:
+
+```powershell
+Copy-Item .env.example .env
+php artisan key:generate
+```
+
+Edit `.env` dan sesuaikan koneksi database:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=laravel
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+### 4. Migrasi dan seeding
+
+```bash
+php artisan migrate
+php artisan db:seed
+```
+
+Seeder akan membuat akun default:
+
+- Admin:
+	- Email: `admin@sigap.test`
+	- Password: `password`
+- Mahasiswa:
+	- Email: `mahasiswa@sigap.test`
+	- Password: `password`
+
+### 5. Jalankan aplikasi
+
+Pilihan cepat (server + queue + vite):
+
+```bash
+composer run dev
+```
+
+Atau jalankan manual di terminal terpisah:
+
+```bash
+php artisan serve
+npm run dev
+```
+
+App default berjalan di:
+
+- `http://127.0.0.1:8000`
+
+### 6. Troubleshooting singkat
+
+- Jika ada perubahan class/path dan class tidak terbaca:
+
+```bash
+composer dump-autoload
+php artisan optimize:clear
+```
+
+- Jika muncul error terkait ekstensi `intl`, aktifkan extension `intl` pada PHP yang dipakai CLI.
 
 ## About Laravel
 

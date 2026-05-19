@@ -45,12 +45,6 @@
                     </div>
                 </a>
 
-                <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
-                    <a href="#fitur" class="hover:text-brand-700">Fitur</a>
-                    <a href="#manfaat" class="hover:text-brand-700">Manfaat</a>
-                    <a href="#aksi" class="hover:text-brand-700">Mulai</a>
-                </nav>
-
                 <div class="hidden md:flex items-center gap-3">
                     @guest
                         <a href="{{ route('login') }}" class="px-4 py-2 rounded-lg text-sm font-semibold border border-slate-300 text-slate-700 hover:border-brand-200 hover:text-brand-700">Login</a>
