@@ -60,4 +60,8 @@ Route::middleware(['role:admin'])->group(function () {
     Route::get('/admin/kriteria', function () {
         return view('kriteria.index');
     })->name('kriteria.index');
+
+    Route::get('/admin/dashboard', function () {
+    return view('admin.dashboard');
+    })->name('admin.dashboard');
 });
