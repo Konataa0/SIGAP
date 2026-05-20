@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Kegiatan;
-use App\Services\SawService;
+use App\Models\Kriteria;
+use App\Http\Services\SawService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class KegiatanController extends Controller
 {
@@ -15,112 +17,145 @@ class KegiatanController extends Controller
         $this->sawService = $sawService;
     }
 
-    // ─── CRUD Kegiatan (dipakai Admin) ──────────────────────────────────────
+    // =========================================================================
+    // CRUD KEGIATAN (Admin)
+    // =========================================================================
 
-    /**
-     * Tampilkan semua kegiatan.
-     * Route: GET /kegiatan
-     */
     public function index()
     {
-        $kegiatan = Kegiatan::orderBy('jenis')->orderBy('nama')->get();
+        $kegiatan = Kegiatan::withCount('nilaiKegiatan')
+                            ->orderBy('jenis')
+                            ->orderBy('nama')
+                            ->get();
         return view('kegiatan.index', compact('kegiatan'));
     }
 
-    /**
-     * Tampilkan form tambah kegiatan.
-     * Route: GET /kegiatan/create
-     */
     public function create()
     {
-        return view('kegiatan.create');
+        // Ambil semua kriteria agar admin bisa langsung isi nilai
+        // saat menambahkan kegiatan baru
+        $kriterias = Kriteria::orderBy('kode')->get();
+        return view('kegiatan.create', compact('kriterias'));
     }
 
-    /**
-     * Simpan kegiatan baru.
-     * Route: POST /kegiatan
-     */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'nama'         => 'required|string|max:255',
-            'jenis'        => 'required|in:ukm,lomba,sertifikasi',
-            'deskripsi'    => 'nullable|string',
-            'penyelenggara'=> 'nullable|string|max:255',
-            'gambar'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        $request->validate([
+            'nama'          => 'required|string|max:255',
+            'jenis'         => 'required|in:ukm,lomba,sertifikasi',
+            'deskripsi'     => 'nullable|string',
+            'penyelenggara' => 'nullable|string|max:255',
+            'gambar'        => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            // Validasi nilai per kriteria (C1–C4), skala 1–5
+            'nilai'         => 'nullable|array',
+            'nilai.*'       => 'nullable|integer|min:1|max:5',
         ]);
 
+        $data = $request->only(['nama', 'jenis', 'deskripsi', 'penyelenggara']);
+
         if ($request->hasFile('gambar')) {
-            $validated['gambar'] = $request->file('gambar')
-                                           ->store('kegiatan', 'public');
+            $data['gambar'] = $request->file('gambar')->store('kegiatan', 'public');
         }
 
-        Kegiatan::create($validated);
+        $kegiatan = Kegiatan::create($data);
 
-        return redirect()->route('kegiatan.index')
-                         ->with('success', 'Kegiatan berhasil ditambahkan.');
+        // Simpan nilai per kriteria ke tabel nilai_kegiatan
+        // Format input: nilai[kriteria_id] = angka
+        if ($request->filled('nilai')) {
+            foreach ($request->nilai as $kriteriaId => $nilaiAngka) {
+                if ($nilaiAngka !== null && $nilaiAngka !== '') {
+                    $kegiatan->nilaiKegiatan()->updateOrCreate(
+                        ['kriteria_id' => $kriteriaId],
+                        ['nilai'       => $nilaiAngka]
+                    );
+                }
+            }
+        }
+
+        return redirect()->route('admin.kegiatan.index')
+                         ->with('success', "Kegiatan \"{$kegiatan->nama}\" berhasil ditambahkan.");
     }
 
-    /**
-     * Tampilkan detail satu kegiatan.
-     * Route: GET /kegiatan/{id}
-     */
-    public function show(Kegiatan $kegiatan)
-    {
-        $kegiatan->load('nilaiKegiatan.kriteria');
-        return view('kegiatan.show', compact('kegiatan'));
-    }
-
-    /**
-     * Tampilkan form edit kegiatan.
-     * Route: GET /kegiatan/{id}/edit
-     */
     public function edit(Kegiatan $kegiatan)
     {
-        return view('kegiatan.edit', compact('kegiatan'));
+        $kriterias = Kriteria::orderBy('kode')->get();
+        // Ambil nilai yang sudah ada, mapping kriteria_id => nilai
+        $nilaiExisting = $kegiatan->nilaiKegiatan
+                                  ->pluck('nilai', 'kriteria_id')
+                                  ->toArray();
+
+        return view('kegiatan.edit', compact('kegiatan', 'kriterias', 'nilaiExisting'));
     }
 
-    /**
-     * Update data kegiatan.
-     * Route: PUT /kegiatan/{id}
-     */
     public function update(Request $request, Kegiatan $kegiatan)
     {
-        $validated = $request->validate([
-            'nama'         => 'required|string|max:255',
-            'jenis'        => 'required|in:ukm,lomba,sertifikasi',
-            'deskripsi'    => 'nullable|string',
-            'penyelenggara'=> 'nullable|string|max:255',
-            'gambar'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        $request->validate([
+            'nama'          => 'required|string|max:255',
+            'jenis'         => 'required|in:ukm,lomba,sertifikasi',
+            'deskripsi'     => 'nullable|string',
+            'penyelenggara' => 'nullable|string|max:255',
+            'gambar'        => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'nilai'         => 'nullable|array',
+            'nilai.*'       => 'nullable|integer|min:1|max:5',
         ]);
 
+        $data = $request->only(['nama', 'jenis', 'deskripsi', 'penyelenggara']);
+
         if ($request->hasFile('gambar')) {
-            $validated['gambar'] = $request->file('gambar')
-                                           ->store('kegiatan', 'public');
+            if ($kegiatan->gambar) {
+                Storage::disk('public')->delete($kegiatan->gambar);
+            }
+            $data['gambar'] = $request->file('gambar')->store('kegiatan', 'public');
         }
 
-        $kegiatan->update($validated);
+        $kegiatan->update($data);
 
-        return redirect()->route('kegiatan.index')
-                         ->with('success', 'Kegiatan berhasil diperbarui.');
+        // Update nilai per kriteria
+        if ($request->filled('nilai')) {
+            foreach ($request->nilai as $kriteriaId => $nilaiAngka) {
+                if ($nilaiAngka !== null && $nilaiAngka !== '') {
+                    $kegiatan->nilaiKegiatan()->updateOrCreate(
+                        ['kriteria_id' => $kriteriaId],
+                        ['nilai'       => $nilaiAngka]
+                    );
+                }
+            }
+        }
+
+        return redirect()->route('admin.kegiatan.index')
+                         ->with('success', "Kegiatan \"{$kegiatan->nama}\" berhasil diperbarui.");
     }
 
-    /**
-     * Hapus kegiatan.
-     * Route: DELETE /kegiatan/{id}
-     */
     public function destroy(Kegiatan $kegiatan)
     {
+        if ($kegiatan->gambar) {
+            Storage::disk('public')->delete($kegiatan->gambar);
+        }
+
+        $nama = $kegiatan->nama;
         $kegiatan->delete();
-        return redirect()->route('kegiatan.index')
-                         ->with('success', 'Kegiatan berhasil dihapus.');
+
+        return redirect()->route('admin.kegiatan.index')
+                         ->with('success', "Kegiatan \"{$nama}\" berhasil dihapus.");
     }
 
-    // ─── Proses SAW (dipakai Mahasiswa) ─────────────────────────────────────
+    // =========================================================================
+    // SPK / SAW (Mahasiswa)
+    // =========================================================================
 
     /**
-     * Proses form preferensi dari Anggota 2 dan hitung SAW.
-     * Route: POST /rekomendasi
+     * Tampilkan form preferensi dengan kriteria dari DB (bukan hardcoded).
+     * Sebelumnya: data kriteria ditulis manual di closure route.
+     * Sekarang: diambil dari tabel kriteria beserta bobotnya.
+     */
+    public function formRekomendasi()
+    {
+        $kriteria = Kriteria::with('bobot')->orderBy('kode')->get();
+        return view('rekomendasi.form', compact('kriteria'));
+    }
+
+    /**
+     * Proses input preferensi dan jalankan algoritma SAW.
      */
     public function prosesRekomendasi(Request $request)
     {
@@ -129,27 +164,23 @@ class KegiatanController extends Controller
             'preferensi.*' => 'required|integer|min:1|max:5',
         ]);
 
-        $userId     = auth()->id();
+        // preferensi format: ['C1' => 4, 'C2' => 3, 'C3' => 2, 'C4' => 5]
         $preferensi = $request->input('preferensi');
-        // $preferensi contoh: ['C1' => 4, 'C2' => 3, 'C3' => 2, 'C4' => 5]
+        $userId     = auth()->id();
 
-        $hasil = $this->sawService->hitung($userId, $preferensi);
+        $this->sawService->hitung($userId, $preferensi);
 
-        // Redirect ke halaman hasil (Anggota 2 yang buat view-nya)
         return redirect()->route('rekomendasi.hasil')
                          ->with('success', 'Rekomendasi berhasil dihitung!');
     }
 
     /**
-     * Tampilkan halaman hasil rekomendasi.
-     * Route: GET /rekomendasi/hasil
+     * Tampilkan hasil ranking SAW dari DB.
      */
     public function hasilRekomendasi()
     {
         $userId = auth()->id();
         $hasil  = $this->sawService->ambilHasil($userId);
-
-        // Anggota 2 yang buat view 'rekomendasi.hasil'
         return view('rekomendasi.hasil', compact('hasil'));
     }
 }
