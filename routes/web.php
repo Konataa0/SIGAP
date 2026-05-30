@@ -2,10 +2,19 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\KegiatanController;
+use App\Http\Controllers\Mahasiswa\BookmarkController;
+use App\Http\Controllers\Mahasiswa\DashboardController;
+use App\Http\Controllers\Mahasiswa\KeikutsertaanController;
+use App\Http\Controllers\Mahasiswa\KegiatanController as MahasiswaKegiatanController;
+use App\Http\Controllers\Mahasiswa\ProfilController;
+use App\Http\Controllers\Mahasiswa\RekomendasiHistoryController;
+use App\Http\Controllers\PublicKegiatanController;
 use Illuminate\Support\Facades\Route;
 
 // ── Halaman publik ────────────────────────────────────────────────────────────
 Route::get('/', fn() => view('home'))->name('home');
+Route::view('/tentang', 'tentang')->name('tentang');
+Route::get('/kegiatan', [PublicKegiatanController::class, 'index'])->name('kegiatan.public');
 
 // ── Auth (tamu) ───────────────────────────────────────────────────────────────
 Route::middleware('guest')->group(function () {
@@ -21,19 +30,40 @@ Route::middleware('auth')->group(function () {
 });
 
 // ── Dashboard Mahasiswa ───────────────────────────────────────────────────────
-Route::get('/dashboard', fn() => view('dashboard'))->name('dashboard');
+Route::middleware(['auth', 'role:mahasiswa'])->prefix('mahasiswa')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('mahasiswa.dashboard');
+
+    Route::get('/bookmark', [BookmarkController::class, 'index'])->name('mahasiswa.bookmark.index');
+    Route::post('/kegiatan/{kegiatan}/bookmark', [BookmarkController::class, 'toggle'])->name('mahasiswa.bookmark.toggle');
+
+    Route::post('/kegiatan/{kegiatan}/status', [KeikutsertaanController::class, 'upsert'])->name('mahasiswa.keikutsertaan.upsert');
+
+    Route::get('/histori-rekomendasi', [RekomendasiHistoryController::class, 'index'])->name('mahasiswa.history.index');
+    Route::get('/histori-rekomendasi/{hasilRekomendasi}', [RekomendasiHistoryController::class, 'show'])->name('mahasiswa.history.show');
+
+    Route::get('/profil', [ProfilController::class, 'show'])->name('mahasiswa.profil.show');
+    Route::put('/profil', [ProfilController::class, 'update'])->name('mahasiswa.profil.update');
+});
 
 // ── SPK: Form preferensi + proses SAW + hasil ─────────────────────────────────
-Route::get('/rekomendasi/form',
-    [KegiatanController::class, 'formRekomendasi'])->name('rekomendasi.form');
-// ↑ Sebelumnya closure dummy dengan $kriteria hardcoded.
-//   Sekarang terhubung ke controller agar kriteria diambil dari DB.
+Route::middleware(['auth', 'role:mahasiswa'])->prefix('mahasiswa')->group(function () {
+    Route::get('/rekomendasi/form',
+        [KegiatanController::class, 'formRekomendasi'])->name('rekomendasi.form');
 
-Route::post('/rekomendasi/proses',
-    [KegiatanController::class, 'prosesRekomendasi'])->name('rekomendasi.proses');
+    // ↑ Sebelumnya closure dummy dengan $kriteria hardcoded.
+    //   Sekarang terhubung ke controller agar kriteria diambil dari DB.
 
-Route::get('/rekomendasi/hasil',
-    [KegiatanController::class, 'hasilRekomendasi'])->name('rekomendasi.hasil');
+    Route::post('/rekomendasi/proses',
+        [KegiatanController::class, 'prosesRekomendasi'])->name('rekomendasi.proses');
+
+    Route::get('/rekomendasi/hasil',
+        [KegiatanController::class, 'hasilRekomendasi'])->name('rekomendasi.hasil');
+
+    Route::get('/kegiatan/{kegiatan}', [MahasiswaKegiatanController::class, 'show'])->name('mahasiswa.kegiatan.show');
+});
+
+// ── Redirect lama agar kompatibel sementara ───────────────────────────────────
+Route::redirect('/dashboard', '/mahasiswa/dashboard');
 
 // ── Admin: hanya role admin ───────────────────────────────────────────────────
 Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {

@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\User;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +21,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Gate::define('akses-mahasiswa', function (?User $user): bool {
+            return (bool) $user && $user->isMahasiswa();
+        });
+
+        Gate::define('akses-admin', function (?User $user): bool {
+            return (bool) $user && $user->isAdmin();
+        });
     }
 }

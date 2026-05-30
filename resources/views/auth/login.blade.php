@@ -49,6 +49,12 @@
                     <p class="text-slate-400 mt-1 text-xs">Masuk menggunakan akun yang sudah terdaftar pada sistem.</p>
                 </div>
 
+                @if(session('error'))
+                    <div class="rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+                        {{ session('error') }}
+                    </div>
+                @endif
+
                 <form method="POST" action="{{ route('login.store') }}" class="space-y-4">
                     @csrf
 
@@ -97,8 +103,8 @@
     </p>
     <div class="flex items-center justify-center gap-2 text-xs text-slate-600">
         <span>atau</span>
-        <a href="#" class="font-semibold text-slate-400 hover:text-indigo-400 hover:underline transition-colors flex items-center gap-1">
-            Masuk sebagai Guest &rarr;
+        <a href="{{ route('kegiatan.public') }}" class="font-semibold text-slate-400 hover:text-indigo-400 hover:underline transition-colors flex items-center gap-1">
+            Lihat Kegiatan Publik &rarr;
         </a>
     </div>
 </div>

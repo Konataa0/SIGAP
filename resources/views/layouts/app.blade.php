@@ -37,10 +37,16 @@
                 {{-- ── Menu Mahasiswa ── --}}
                 <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block px-3 mb-2">Main Menu</span>
 
-                <a href="{{ route('dashboard') }}"
+                <a href="{{ route('mahasiswa.dashboard') }}"
                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
-                   {{ request()->routeIs('dashboard') ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }}">
+                    {{ request()->routeIs('mahasiswa.dashboard') ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }}">
                     <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+                </a>
+
+                <a href="{{ route('mahasiswa.profil.show') }}"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
+                   {{ request()->routeIs('mahasiswa.profil.*') ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }}">
+                    <i data-lucide="user-round" class="w-4 h-4"></i> Profil
                 </a>
 
                 <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block px-3 pt-4 mb-2">Fitur SPK</span>
@@ -55,6 +61,18 @@
                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
                    {{ request()->routeIs('rekomendasi.hasil') ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }}">
                     <i data-lucide="award" class="w-4 h-4"></i> Hasil Rekomendasi
+                </a>
+
+                <a href="{{ route('mahasiswa.history.index') }}"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
+                   {{ request()->routeIs('mahasiswa.history.*') ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }}">
+                    <i data-lucide="history" class="w-4 h-4"></i> Histori Rekomendasi
+                </a>
+
+                <a href="{{ route('mahasiswa.bookmark.index') }}"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
+                   {{ request()->routeIs('mahasiswa.bookmark.*') ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }}">
+                    <i data-lucide="bookmark" class="w-4 h-4"></i> Kegiatan Tersimpan
                 </a>
 
                 {{-- ── Menu Admin — hanya tampil kalau role admin ── --}}

@@ -6,6 +6,8 @@ use App\Models\Kegiatan;
 use App\Models\Kriteria;
 use App\Http\Services\SawService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 
 class KegiatanController extends Controller
@@ -23,6 +25,8 @@ class KegiatanController extends Controller
 
     public function index()
     {
+        Gate::authorize('akses-admin');
+
         $kegiatan = Kegiatan::withCount('nilaiKegiatan')
                             ->orderBy('jenis')
                             ->orderBy('nama')
@@ -32,6 +36,8 @@ class KegiatanController extends Controller
 
     public function create()
     {
+        Gate::authorize('akses-admin');
+
         // Ambil semua kriteria agar admin bisa langsung isi nilai
         // saat menambahkan kegiatan baru
         $kriterias = Kriteria::orderBy('kode')->get();
@@ -40,18 +46,27 @@ class KegiatanController extends Controller
 
     public function store(Request $request)
     {
+        Gate::authorize('akses-admin');
+
         $request->validate([
             'nama'          => 'required|string|max:255',
             'jenis'         => 'required|in:ukm,lomba,sertifikasi',
             'deskripsi'     => 'nullable|string',
             'penyelenggara' => 'nullable|string|max:255',
             'gambar'        => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'syarat_ketentuan'   => 'nullable|string',
+            'deadline_pendaftaran' => 'nullable|date',
+            'link_pendaftaran'   => 'nullable|url',
+            'kontak_pic'         => 'nullable|string|max:255',
             // Validasi nilai per kriteria (C1–C4), skala 1–5
             'nilai'         => 'nullable|array',
             'nilai.*'       => 'nullable|integer|min:1|max:5',
         ]);
 
-        $data = $request->only(['nama', 'jenis', 'deskripsi', 'penyelenggara']);
+        $data = $request->only([
+            'nama', 'jenis', 'deskripsi', 'penyelenggara',
+            'syarat_ketentuan', 'deadline_pendaftaran', 'link_pendaftaran', 'kontak_pic',
+        ]);
 
         if ($request->hasFile('gambar')) {
             $data['gambar'] = $request->file('gambar')->store('kegiatan', 'public');
@@ -78,6 +93,8 @@ class KegiatanController extends Controller
 
     public function edit(Kegiatan $kegiatan)
     {
+        Gate::authorize('akses-admin');
+
         $kriterias = Kriteria::orderBy('kode')->get();
         // Ambil nilai yang sudah ada, mapping kriteria_id => nilai
         $nilaiExisting = $kegiatan->nilaiKegiatan
@@ -89,17 +106,26 @@ class KegiatanController extends Controller
 
     public function update(Request $request, Kegiatan $kegiatan)
     {
+        Gate::authorize('akses-admin');
+
         $request->validate([
             'nama'          => 'required|string|max:255',
             'jenis'         => 'required|in:ukm,lomba,sertifikasi',
             'deskripsi'     => 'nullable|string',
             'penyelenggara' => 'nullable|string|max:255',
             'gambar'        => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'syarat_ketentuan'   => 'nullable|string',
+            'deadline_pendaftaran' => 'nullable|date',
+            'link_pendaftaran'   => 'nullable|url',
+            'kontak_pic'         => 'nullable|string|max:255',
             'nilai'         => 'nullable|array',
             'nilai.*'       => 'nullable|integer|min:1|max:5',
         ]);
 
-        $data = $request->only(['nama', 'jenis', 'deskripsi', 'penyelenggara']);
+        $data = $request->only([
+            'nama', 'jenis', 'deskripsi', 'penyelenggara',
+            'syarat_ketentuan', 'deadline_pendaftaran', 'link_pendaftaran', 'kontak_pic',
+        ]);
 
         if ($request->hasFile('gambar')) {
             if ($kegiatan->gambar) {
@@ -128,6 +154,8 @@ class KegiatanController extends Controller
 
     public function destroy(Kegiatan $kegiatan)
     {
+        Gate::authorize('akses-admin');
+
         if ($kegiatan->gambar) {
             Storage::disk('public')->delete($kegiatan->gambar);
         }
@@ -150,8 +178,14 @@ class KegiatanController extends Controller
      */
     public function formRekomendasi()
     {
-        $kriteria = Kriteria::with('bobot')->orderBy('kode')->get();
-        return view('rekomendasi.form', compact('kriteria'));
+        Gate::authorize('akses-mahasiswa');
+
+        $minatTeknis = ['frontend', 'backend', 'mobile', 'AI/ML', 'cybersecurity', 'data science', 'cloud', 'IoT'];
+        $targetKarir = ['software engineer', 'data analyst', 'UI/UX designer', 'cybersecurity analyst', 'AI engineer', 'system analyst'];
+        $waktuLuang = ['<5 jam/minggu', '5-10 jam/minggu', '>10 jam/minggu'];
+        $tujuan = ['cari pengalaman', 'persiapan kerja', 'tingkatkan skill', 'ikut kompetisi'];
+
+        return view('rekomendasi.form', compact('minatTeknis', 'targetKarir', 'waktuLuang', 'tujuan'));
     }
 
     /**
@@ -159,14 +193,18 @@ class KegiatanController extends Controller
      */
     public function prosesRekomendasi(Request $request)
     {
+        Gate::authorize('akses-mahasiswa');
+
         $request->validate([
-            'preferensi'   => 'required|array',
-            'preferensi.*' => 'required|integer|min:1|max:5',
+            'minat_teknis'   => 'required|array|min:1',
+            'minat_teknis.*' => 'required|string',
+            'target_karir'   => 'required|string',
+            'waktu_luang'    => 'required|string',
+            'tujuan'         => 'required|string',
         ]);
 
-        // preferensi format: ['C1' => 4, 'C2' => 3, 'C3' => 2, 'C4' => 5]
-        $preferensi = $request->input('preferensi');
-        $userId     = auth()->id();
+        $preferensi = $request->only(['minat_teknis', 'target_karir', 'waktu_luang', 'tujuan']);
+        $userId     = Auth::id();
 
         $this->sawService->hitung($userId, $preferensi);
 
@@ -179,7 +217,9 @@ class KegiatanController extends Controller
      */
     public function hasilRekomendasi()
     {
-        $userId = auth()->id();
+        Gate::authorize('akses-mahasiswa');
+
+        $userId = Auth::id();
         $hasil  = $this->sawService->ambilHasil($userId);
         return view('rekomendasi.hasil', compact('hasil'));
     }

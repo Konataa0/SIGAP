@@ -18,6 +18,10 @@
            class="inline-flex items-center gap-2 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all shadow-md shrink-0 w-fit">
             <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Hitung Ulang Preferensi
         </a>
+        <a href="{{ route('mahasiswa.history.index') }}"
+           class="inline-flex items-center gap-2 bg-cyan-500 text-slate-950 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all shadow-md shrink-0 w-fit">
+            <i data-lucide="history" class="w-3.5 h-3.5"></i> Lihat Histori
+        </a>
     </div>
 
     @if(empty($hasil))

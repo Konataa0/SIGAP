@@ -39,7 +39,7 @@ class AuthController extends Controller
              return redirect()->route('admin.dashboard');
         }
 
-        return redirect()->route('dashboard');
+           return redirect()->route('mahasiswa.dashboard');
     }
 
     public function register(Request $request)
@@ -61,7 +61,7 @@ class AuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->route('dashboard');
+        return redirect()->route('mahasiswa.dashboard');
     }
 
     public function logout(Request $request)

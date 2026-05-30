@@ -17,6 +17,14 @@ class Kegiatan extends Model
         'deskripsi',
         'penyelenggara',
         'gambar',
+        'syarat_ketentuan',
+        'deadline_pendaftaran',
+        'link_pendaftaran',
+        'kontak_pic',
+    ];
+
+    protected $casts = [
+        'deadline_pendaftaran' => 'date',
     ];
 
     /**
@@ -33,6 +41,22 @@ class Kegiatan extends Model
     public function hasilSaw()
     {
         return $this->hasMany(HasilSaw::class);
+    }
+
+    public function hasilRekomendasi()
+    {
+        return $this->hasMany(HasilRekomendasi::class);
+    }
+
+    public function bookmarkUsers()
+    {
+        return $this->belongsToMany(User::class, 'bookmark_kegiatan')
+            ->withTimestamps();
+    }
+
+    public function keikutsertaan()
+    {
+        return $this->hasMany(Keikutsertaan::class);
     }
 
     /**

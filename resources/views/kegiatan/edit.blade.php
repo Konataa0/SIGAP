@@ -59,6 +59,30 @@
                     <textarea name="deskripsi" rows="3"
                               class="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-white outline-none transition-all resize-none">{{ old('deskripsi', $kegiatan->deskripsi) }}</textarea>
                 </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Syarat & Ketentuan</label>
+                    <textarea name="syarat_ketentuan" rows="3"
+                              class="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-white outline-none transition-all resize-none">{{ old('syarat_ketentuan', $kegiatan->syarat_ketentuan) }}</textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Deadline Pendaftaran</label>
+                    <input type="date" name="deadline_pendaftaran" value="{{ old('deadline_pendaftaran', optional($kegiatan->deadline_pendaftaran)->format('Y-m-d')) }}"
+                           class="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-white outline-none transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Link Pendaftaran</label>
+                    <input type="url" name="link_pendaftaran" value="{{ old('link_pendaftaran', $kegiatan->link_pendaftaran) }}"
+                           class="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-white outline-none transition-all">
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Kontak PIC</label>
+                    <input type="text" name="kontak_pic" value="{{ old('kontak_pic', $kegiatan->kontak_pic) }}"
+                           class="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-white outline-none transition-all">
+                </div>
             </div>
         </div>
 

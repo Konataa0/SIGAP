@@ -9,12 +9,12 @@ class KegiatanPolicy
 {
     public function viewAny(?User $user): bool
     {
-        return true;
+        return (bool) $user && $user->isMahasiswa();
     }
 
     public function view(?User $user, Kegiatan $kegiatan): bool
     {
-        return true;
+        return (bool) $user && $user->isMahasiswa();
     }
 
     public function create(User $user): bool

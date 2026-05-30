@@ -15,6 +15,9 @@ class DatabaseSeeder extends Seeder
             'email'    => 'admin@sigap.test',
             'password' => bcrypt('password'),
             'role'     => 'admin',
+            'nim'      => null,
+            'jurusan'  => null,
+            'angkatan' => null,
         ]);
 
         // ── Buat akun Mahasiswa contoh ────────────────────────────────────────
@@ -23,6 +26,9 @@ class DatabaseSeeder extends Seeder
             'email'    => 'mahasiswa@sigap.test',
             'password' => bcrypt('password'),
             'role'     => 'mahasiswa',
+            'nim'      => '23010101',
+            'jurusan'  => 'Teknik Informatika',
+            'angkatan' => '2023',
         ]);
 
         // ── Jalankan seeder data ──────────────────────────────────────────────

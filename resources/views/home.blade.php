@@ -53,7 +53,7 @@
                     @endguest
 
                     @auth
-                        <a href="{{ route('dashboard') }}" class="px-4 py-2 rounded-lg text-sm font-semibold border border-slate-700 text-slate-300 hover:border-slate-500 hover:text-white transition-all">Dashboard</a>
+                        <a href="{{ route('mahasiswa.dashboard') }}" class="px-4 py-2 rounded-lg text-sm font-semibold border border-slate-700 text-slate-300 hover:border-slate-500 hover:text-white transition-all">Dashboard</a>
                         <form method="POST" action="{{ route('logout') }}" class="inline">
                             @csrf
                             <button type="submit" class="px-4 py-2 rounded-lg text-sm font-semibold bg-slate-800 text-slate-200 hover:bg-slate-700 transition-all">Logout</button>
@@ -88,6 +88,12 @@
                                 </a>
                                 <a href="{{ route('login') }}" class="px-6 py-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 font-semibold hover:border-slate-700 hover:text-white transition-all">
                                     Login
+                                </a>
+                                <a href="{{ route('tentang') }}" class="px-6 py-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 font-semibold hover:border-slate-700 hover:text-white transition-all">
+                                    Tentang
+                                </a>
+                                <a href="{{ route('kegiatan.public') }}" class="px-6 py-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 font-semibold hover:border-slate-700 hover:text-white transition-all">
+                                    Kegiatan Ringkas
                                 </a>
                             @endguest
 

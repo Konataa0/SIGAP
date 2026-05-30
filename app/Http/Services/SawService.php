@@ -4,7 +4,7 @@ namespace App\Http\Services;
 
 use App\Models\Kegiatan;
 use App\Models\Kriteria;
-use App\Models\HasilSaw;
+use App\Models\HasilRekomendasi;
 use Illuminate\Support\Facades\DB;
 
 class SawService
@@ -26,6 +26,8 @@ class SawService
      */
     public function hitung(int $userId, array $preferensi): array
     {
+        $preferensiKriteria = $this->konversiPreferensi($preferensi);
+
         // ─── Langkah 1: Ambil data dari database ──────────────────────────────
         $semuaKegiatan = Kegiatan::with('nilaiKegiatan.kriteria')->get();
         $semuaKriteria = Kriteria::with('bobot')->get();
@@ -95,7 +97,7 @@ class SawService
         foreach ($semuaKriteria as $kriteria) {
             $kode        = $kriteria->kode;
             $bobotTetap  = $kriteria->bobot->nilai ?? 0;
-            $prefMhs     = $preferensi[$kode] ?? 3; // default 3 kalau tidak ada input
+            $prefMhs     = $preferensiKriteria[$kode] ?? 3; // default 3 kalau tidak ada input
 
             // Gabungkan bobot tetap dengan preferensi mahasiswa
             $bobotDinamis[$kode] = $bobotTetap * $prefMhs;
@@ -145,30 +147,80 @@ class SawService
         }
 
         // ─── Langkah 7: Simpan hasil ke database ──────────────────────────────
-        $this->simpanHasil($userId, $hasil, $preferensi);
+        $this->simpanHasil($userId, $hasil, $preferensi, $preferensiKriteria);
 
         return $hasil;
     }
 
     /**
-     * Simpan hasil ke tabel hasil_saw.
-     * Hasil lama user ini dihapus dulu (fresh per sesi hitung).
+     * Simpan hasil ke tabel hasil_rekomendasi.
+     * Setiap run disimpan sebagai sesi baru agar histori tetap utuh.
      */
-    private function simpanHasil(int $userId, array $hasil, array $preferensi): void
+    private function simpanHasil(int $userId, array $hasil, array $preferensi, array $preferensiKriteria): void
     {
-        DB::transaction(function () use ($userId, $hasil, $preferensi) {
-            HasilSaw::where('user_id', $userId)->delete();
+        DB::transaction(function () use ($userId, $hasil, $preferensi, $preferensiKriteria) {
+            $hasilDetail = collect($hasil)->map(function (array $row) {
+                return [
+                    'ranking'     => $row['ranking'],
+                    'kegiatan_id' => $row['kegiatan_id'],
+                    'nama'        => $row['kegiatan']->nama,
+                    'jenis'       => $row['kegiatan']->jenis,
+                    'skor'        => $row['skor'],
+                ];
+            })->values()->toArray();
 
-            foreach ($hasil as $row) {
-                HasilSaw::create([
-                    'user_id'          => $userId,
-                    'kegiatan_id'      => $row['kegiatan_id'],
-                    'skor'             => $row['skor'],
-                    'ranking'          => $row['ranking'],
-                    'input_preferensi' => json_encode($preferensi),
-                ]);
-            }
+            HasilRekomendasi::create([
+                'user_id'      => $userId,
+                'preferensi'   => $preferensi,
+                'hasil_detail' => $hasilDetail,
+                'top_tiga'     => array_slice($hasilDetail, 0, 3),
+            ]);
         });
+    }
+
+    /**
+     * Ubah input form mahasiswa menjadi bobot preferensi C1-C4.
+     */
+    private function konversiPreferensi(array $preferensi): array
+    {
+        $minatTeknis = $preferensi['minat_teknis'] ?? [];
+        $targetKarir = $preferensi['target_karir'] ?? '';
+        $waktuLuang  = $preferensi['waktu_luang'] ?? '';
+        $tujuan      = $preferensi['tujuan'] ?? '';
+
+        $skorMinat = min(5, max(1, count($minatTeknis) + 2));
+
+        $skorKarir = match ($targetKarir) {
+            'software engineer' => 5,
+            'data analyst' => 4,
+            'UI/UX designer' => 4,
+            'cybersecurity analyst' => 5,
+            'AI engineer' => 5,
+            'system analyst' => 4,
+            default => 3,
+        };
+
+        $skorWaktu = match ($waktuLuang) {
+            '<5 jam/minggu' => 5,
+            '5-10 jam/minggu' => 3,
+            '>10 jam/minggu' => 1,
+            default => 3,
+        };
+
+        $skorTujuan = match ($tujuan) {
+            'cari pengalaman' => 4,
+            'persiapan kerja' => 5,
+            'tingkatkan skill' => 5,
+            'ikut kompetisi' => 4,
+            default => 3,
+        };
+
+        return [
+            'C1' => $skorMinat,
+            'C2' => $skorKarir,
+            'C3' => $skorWaktu,
+            'C4' => $skorTujuan,
+        ];
     }
 
     /**
@@ -176,19 +228,20 @@ class SawService
      */
     public function ambilHasil(int $userId): array
     {
-        $rows = HasilSaw::where('user_id', $userId)
-                        ->with('kegiatan')
-                        ->orderBy('ranking')
-                        ->get();
+        $sesi = HasilRekomendasi::where('user_id', $userId)
+            ->latest()
+            ->first();
 
-        if ($rows->isEmpty()) {
+        if (!$sesi) {
             return [];
         }
 
-        return $rows->map(fn($row) => [
-            'ranking'  => $row->ranking,
-            'skor'     => $row->skor,
-            'kegiatan' => $row->kegiatan,
-        ])->toArray();
+        return collect($sesi->hasil_detail ?? [])->map(function (array $row) {
+            return [
+                'ranking'  => $row['ranking'] ?? null,
+                'skor'     => $row['skor'] ?? 0,
+                'kegiatan' => Kegiatan::find($row['kegiatan_id'] ?? null),
+            ];
+        })->filter(fn ($row) => $row['kegiatan'])->values()->toArray();
     }
 }

@@ -17,7 +17,8 @@ class RoleMiddleware
     {
         // Kalau belum login, arahkan ke login.
         if (!Auth::check()) {
-            return redirect()->route('login');
+            return redirect()->route('login')
+                ->with('error', 'Silakan login untuk mengakses fitur ini.');
         }
 
         $user = Auth::user();

@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\HasilRekomendasi;
+use App\Models\Keikutsertaan;
 
 class User extends Authenticatable
 {
@@ -15,6 +17,9 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'nim',
+        'jurusan',
+        'angkatan',
     ];
 
     protected $hidden = [
@@ -56,9 +61,23 @@ class User extends Authenticatable
      */
     public function rekomendasiTerakhir()
     {
-        return $this->hasMany(HasilSaw::class)
-                    ->with('kegiatan')
-                    ->orderBy('ranking')
+        return $this->hasMany(HasilRekomendasi::class)
                     ->latest();
+    }
+
+    public function hasilRekomendasi()
+    {
+        return $this->hasMany(HasilRekomendasi::class);
+    }
+
+    public function bookmarkKegiatan()
+    {
+        return $this->belongsToMany(Kegiatan::class, 'bookmark_kegiatan')
+            ->withTimestamps();
+    }
+
+    public function keikutsertaan()
+    {
+        return $this->hasMany(Keikutsertaan::class);
     }
 }
